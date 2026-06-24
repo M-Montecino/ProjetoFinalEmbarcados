@@ -44,7 +44,7 @@ export default function Index() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.container}>
-          <Image source={require("@/assets/img1.jpg")} style={styles.image} />
+          <Image source={require("@/assets/1.jpg")} style={styles.image} />
 
           <Text style={styles.title}>Entrar</Text>
           <Text style={styles.subtitle}>
@@ -74,7 +74,7 @@ export default function Index() {
 const styles = StyleSheet.create({
 container: {
   flex: 1,
-  backgroundColor: "#F4F6F8",
+  backgroundColor: "#22242a",
   justifyContent: "center",
   padding: 24,
 },
@@ -98,6 +98,7 @@ image: {
 
 title: {
   fontSize: 28,
+  color: "#F4F6F8",
   fontWeight: "bold",
   textAlign: "center",
   marginBottom: 8,
@@ -105,7 +106,7 @@ title: {
 
 subtitle: {
   textAlign: "center",
-  color: "#666",
+  color: "#F4F6F8",
   marginBottom: 24,
 },
 

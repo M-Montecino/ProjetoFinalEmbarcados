@@ -8,9 +8,7 @@ const styles = StyleSheet.create({
   input: {
     width: "100%",
     height: 45,
-    borderWidth: 1,
-    borderColor: "#537E72",
-    backgroundColor: "#fdfdfd",
+    backgroundColor: "#363840",
     borderRadius: 8,
     fontSize: 20,
     paddingLeft: 12,
