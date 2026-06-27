@@ -36,6 +36,10 @@ export default function PainelControle() {
               label="Cartões Cadastrados"
               onPress={() => router.push("/cartoes_cadastrados")}
             />
+            <Button
+              label="Históricos"
+              onPress={() => router.push("/historico")}
+            />
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
