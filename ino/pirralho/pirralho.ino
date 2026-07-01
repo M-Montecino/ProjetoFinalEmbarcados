@@ -4,10 +4,10 @@
 #include <ESP8266HTTPClient.h>
 #include <ArduinoJson.h>
 
-const char* ssid = "APTO_303_2G";
-const char* password = "vitor0802";
+const char* ssid = "roteador";
+const char* password = "umabatata";
 
-String servidor = "http://192.168.0.119:5000";
+String servidor = "http://150.162.146.14:5000";
 
 #define SS_PIN       D8
 #define RST_PIN      D0
@@ -99,7 +99,7 @@ bool registerMode = false;
 
     resposta = http.getString();
     http.end();
-
+    Serial.println(resposta);
     deserializeJson(jsonResposta, resposta);
 
     return jsonResposta["authorized"];
@@ -150,8 +150,37 @@ bool registerMode = false;
     if (jsonResposta["status"] == "ok") {
       Serial.println("Cartão cadastrado com sucesso.");
       BuzzerCadastro();
+      // enviar log de cadastro
+      sendLog(uidTexto, "registered");
     }
   }
+
+void sendLog(String uidTexto, String status) {
+  WiFiClient client;
+  HTTPClient http;
+  String body;
+  JsonDocument jsonEnvio;
+
+  jsonEnvio["uid"] = uidTexto;
+  jsonEnvio["status"] = status;
+  serializeJson(jsonEnvio, body);
+
+  http.begin(client, servidor + "/log");
+  http.addHeader("Content-Type", "application/json");
+
+  int codigo = http.POST(body);
+
+  Serial.println(codigo);
+
+  if (codigo <= 0) {
+    Serial.println("Erro ao enviar log.");
+    http.end();
+    return;
+  }
+
+  String resposta = http.getString();
+  http.end();
+}
 
 void printUID(byte *uid, byte size) {
     for (byte i = 0; i < size; i++) {
@@ -176,6 +205,17 @@ void setup() {
     delay(500);
     Serial.print(".");
   }
+
+  Serial.println();
+  Serial.print("IP do ESP: ");
+  Serial.println(WiFi.localIP());
+
+  Serial.print("Gateway: ");
+  Serial.println(WiFi.gatewayIP());
+
+  Serial.print("Mascara: ");
+  Serial.println(WiFi.subnetMask());
+
   pinMode(LED_VERMELHO, OUTPUT);
   digitalWrite(LED_VERMELHO, LOW);
 
@@ -234,12 +274,23 @@ void loop() {
   }
 
   else {
+    String uidTexto = "";
+    for (int i = 0; i < 4; i++) {
+      if (rfid.uid.uidByte[i] < 16) {
+        uidTexto += "0";
+      }
+
+      uidTexto += String(rfid.uid.uidByte[i], HEX);
+    }
+
     if (isAuthorized(rfid.uid.uidByte)) {
       Serial.println("ACESSO LIBERADO");
       BuzzerSucesso();
+      sendLog(uidTexto, "authorized");
     } else {
       Serial.println("ACESSO NEGADO");
       BuzzerNegado();
+      sendLog(uidTexto, "denied");
     }
   }
 
