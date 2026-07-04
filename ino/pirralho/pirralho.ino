@@ -19,11 +19,7 @@ String servidor = "http://150.162.146.14:5000";
 #define LED_AMARELO D2
 #define LED_VERMELHO D3
 
-byte masterCard[4] = {0x7B, 0x7D, 0xF1, 0x06};
-
 MFRC522 rfid(SS_PIN, RST_PIN);
-
-bool registerMode = false;
 
 // buzzer
   void BuzzerSucesso() {
@@ -190,11 +186,21 @@ void printUID(byte *uid, byte size) {
     Serial.println();
 }
 
-bool isMaster(byte *uid) {
-  for (int i = 0; i < 4; i++) {
-    if (uid[i] != masterCard[i]) return false;
+bool getRegisterMode() {
+  WiFiClient client;
+  HTTPClient http;
+  http.begin(client, servidor + "/cadastro/status");
+  int codigo = http.GET();
+  if (codigo <= 0) {
+    http.end();
+    return false;
   }
-  return true;
+  String resposta = http.getString();
+  http.end();
+  
+  JsonDocument jsonResposta;
+  deserializeJson(jsonResposta, resposta);
+  return jsonResposta["cadastro_ativo"] | false;
 }
 
 void setup() {
@@ -232,8 +238,7 @@ void setup() {
   digitalWrite(BUZZER_PIN, LOW);
 
   Serial.println("Sistema iniciado");
-  Serial.println("Modo inicial: LEITURA");
-  Serial.println("Aproxime o cartão Mestre para alternar modo");
+  Serial.println("Controle de acesso online");
 }
 
 void loop() {
@@ -248,26 +253,7 @@ void loop() {
   Serial.print("UID lido:");
   printUID(rfid.uid.uidByte, rfid.uid.size);
 
-  if (isMaster(rfid.uid.uidByte)) {
-    registerMode = !registerMode;
-
-    Serial.println();
-    if (registerMode) {
-      Serial.println("=== MODO CADASTRO ===");
-      Serial.println("Aproxime um cartão para cadastrar");
-    } else {
-      Serial.println("=== MODO LEITURA ===");
-      Serial.println("Aproxime um cartão para validar");
-    }
-
-    BuzzerTrocaModo();
-
-    delay(500);
-    rfid.PICC_HaltA();
-    rfid.PCD_StopCrypto1();
-    return;
-
-  }
+  bool registerMode = getRegisterMode();
 
   if (registerMode) {
     registerCard(rfid.uid.uidByte);

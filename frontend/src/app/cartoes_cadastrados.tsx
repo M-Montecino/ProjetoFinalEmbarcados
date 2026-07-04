@@ -1,6 +1,7 @@
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { StyleSheet, Text, View, FlatList, ActivityIndicator, RefreshControl } from "react-native";
+import { StyleSheet, Text, View, FlatList, ActivityIndicator, RefreshControl, TouchableOpacity, Alert } from "react-native";
+
 
 import { Button } from "@/components/Button";
 
@@ -22,6 +23,36 @@ export default function CartoesCadastrados() {
     }
   }
 
+  async function deleteCard(uid: string) {
+    Alert.alert(
+      "Excluir Cartão",
+      `Tem certeza que deseja excluir o cartão ${uid}?`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Excluir",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const res = await fetch(`http://192.168.0.119:5000/cards/${uid}`, {
+                method: "DELETE",
+              });
+              const data = await res.json();
+              if (data.status === "ok") {
+                setCards((prev) => prev.filter((c) => c !== uid));
+              } else {
+                Alert.alert("Erro", "Não foi possível excluir o cartão.");
+              }
+            } catch (e) {
+              console.log(e);
+              Alert.alert("Erro", "Erro ao conectar com o servidor.");
+            }
+          },
+        },
+      ]
+    );
+  }
+
   useEffect(() => {
     loadCards();
   }, []);
@@ -39,6 +70,9 @@ export default function CartoesCadastrados() {
           renderItem={({ item }) => (
             <View style={styles.item}>
               <Text style={styles.itemText}>{item}</Text>
+              <TouchableOpacity style={styles.deleteButton} onPress={() => deleteCard(item)}>
+                <Text style={styles.deleteButtonText}>✕</Text>
+              </TouchableOpacity>
             </View>
           )}
           contentContainerStyle={{ paddingBottom: 24 }}
@@ -79,9 +113,22 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     marginBottom: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   itemText: {
     color: "#F4F6F8",
     fontSize: 16,
+    flex: 1,
+  },
+  deleteButton: {
+    padding: 8,
+    marginLeft: 8,
+  },
+  deleteButtonText: {
+    color: "#ff4d4d",
+    fontSize: 18,
+    fontWeight: "bold",
   },
 });
