@@ -2,12 +2,14 @@ import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, View, FlatList, ActivityIndicator, RefreshControl } from "react-native";
 
+import { API_URL } from "@/config/api";
 import { Button } from "@/components/Button";
 
 type LogItem = {
   id: number;
   uid: string;
   status: string;
+  name?: string;
   timestamp: string;
 };
 
@@ -19,7 +21,7 @@ export default function Historico() {
   async function loadHistory() {
     try {
       setLoading(true);
-      const res = await fetch("http://192.168.0.119:5000/history");
+      const res = await fetch(`${API_URL}/history`);
       const data = await res.json();
       setLogs(data || []);
     } catch (e) {
@@ -43,11 +45,18 @@ export default function Historico() {
         <FlatList
           data={logs}
           keyExtractor={(item) => String(item.id)}
-          renderItem={({ item }) => (
-            <View style={styles.item}>
-              <Text style={styles.itemText}>{item.timestamp} — {item.uid} — {item.status}</Text>
-            </View>
-          )}
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item }) => {
+            const displayName = item.name?.trim() || "Sem nome";
+            return (
+              <View style={styles.item}>
+                <Text style={styles.nameText}>{displayName}</Text>
+                <Text style={styles.uidText}>UID: {item.uid}</Text>
+                <Text style={styles.statusText}>{item.status}</Text>
+                <Text style={styles.timeText}>{item.timestamp}</Text>
+              </View>
+            );
+          }}
           contentContainerStyle={{ paddingBottom: 24 }}
           refreshControl={
             <RefreshControl
@@ -87,8 +96,24 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 8,
   },
-  itemText: {
+  nameText: {
     color: "#F4F6F8",
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 4,
+  },
+  uidText: {
+    color: "#9fb0c4",
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  statusText: {
+    color: "#cfd6df",
     fontSize: 14,
+    marginBottom: 4,
+  },
+  timeText: {
+    color: "#8f949c",
+    fontSize: 12,
   },
 });

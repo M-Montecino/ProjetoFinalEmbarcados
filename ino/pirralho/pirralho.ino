@@ -146,37 +146,8 @@ MFRC522 rfid(SS_PIN, RST_PIN);
     if (jsonResposta["status"] == "ok") {
       Serial.println("Cartão cadastrado com sucesso.");
       BuzzerCadastro();
-      // enviar log de cadastro
-      sendLog(uidTexto, "registered");
     }
   }
-
-void sendLog(String uidTexto, String status) {
-  WiFiClient client;
-  HTTPClient http;
-  String body;
-  JsonDocument jsonEnvio;
-
-  jsonEnvio["uid"] = uidTexto;
-  jsonEnvio["status"] = status;
-  serializeJson(jsonEnvio, body);
-
-  http.begin(client, servidor + "/log");
-  http.addHeader("Content-Type", "application/json");
-
-  int codigo = http.POST(body);
-
-  Serial.println(codigo);
-
-  if (codigo <= 0) {
-    Serial.println("Erro ao enviar log.");
-    http.end();
-    return;
-  }
-
-  String resposta = http.getString();
-  http.end();
-}
 
 void printUID(byte *uid, byte size) {
     for (byte i = 0; i < size; i++) {
@@ -205,6 +176,16 @@ bool getRegisterMode() {
 
 void setup() {
   Serial.begin(115200);
+
+  // Dica de estabilidade para ESP8266
+  WiFi.mode(WIFI_STA);
+  WiFi.disconnect();
+  delay(100);
+
+  Serial.println();
+  Serial.print("Conectando-se à rede: ");
+  Serial.println(ssid);
+
   WiFi.begin(ssid, password);
 
   while (WiFi.status() != WL_CONNECTED) {
@@ -272,11 +253,9 @@ void loop() {
     if (isAuthorized(rfid.uid.uidByte)) {
       Serial.println("ACESSO LIBERADO");
       BuzzerSucesso();
-      sendLog(uidTexto, "authorized");
     } else {
       Serial.println("ACESSO NEGADO");
       BuzzerNegado();
-      sendLog(uidTexto, "denied");
     }
   }
 
